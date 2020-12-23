@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CableMic</string>
+    <string name="buttonDescription">OnOff</string>
 </resources>
