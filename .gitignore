@@ -13,4 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
-/app/libs/src/main/java/res/drawable-mdpi
+/app/src/main/res/drawable-mdpi
