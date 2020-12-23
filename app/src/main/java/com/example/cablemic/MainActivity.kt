@@ -22,14 +22,13 @@ class MainActivity : AppCompatActivity() {
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT))
 
-    private val audioRecord = AudioRecord( // インスタンス召喚の儀
-        MediaRecorder.AudioSource.MIC, // 入力音源はマイク
-        smplRate, // 44100Hz
-        AudioFormat.CHANNEL_IN_MONO, // モノトラック
-        AudioFormat.ENCODING_PCM_16BIT, // PCM 16bit
-        bufSize) // バッファ
-
     private fun startRecording() {
+        val audioRecord = AudioRecord( // インスタンス召喚の儀
+            MediaRecorder.AudioSource.MIC, // 入力音源はマイク
+            smplRate, // 44100Hz
+            AudioFormat.CHANNEL_IN_MONO, // モノトラック
+            AudioFormat.ENCODING_PCM_16BIT, // PCM 16bit
+            bufSize) // バッファ
 
         audioRecord.positionNotificationPeriod = shortPerFrame // フレーム当たりの処理数を指定
         audioRecord.notificationMarkerPosition = 10000 // マーカー周期を指定
@@ -48,22 +47,23 @@ class MainActivity : AppCompatActivity() {
                 // 好きに処理する
             }
         })
+        audioRecord.startRecording()
     }
 
     private var active = false // マイクONのときtrue
 
-    fun buttonClick(v: View) { // ボタンが押された時の処理
+    private fun buttonClick(v: View) { // ボタンが押された時の処理
         val aButton = v as ImageButton // 画像ボタンを指定
         active = !active // ON/OFF反転
 
         if (active) // マイクONのとき
         {
             aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
-            audioRecord.startRecording() // マイクON
+            startRecording() // マイクON
         } else {
             aButton.setImageResource(R.drawable.`_`) // マイクOFFの画像に変更
             Log.v("AudioRecord", "stop")
-            audioRecord.stop() // マイクOFF
+            //audioRecord.stop() // マイクOFF
         }
     }
 
@@ -71,5 +71,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val imageButton: ImageButton = findViewById(R.id.imageButton)
+        imageButton.setOnClickListener {
+            buttonClick(imageButton)
+        }
     }
 }
