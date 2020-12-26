@@ -10,13 +10,15 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageButton
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import kotlin.math.max
 
 
 class MainActivity : AppCompatActivity() {
 
-    private val PERMISSIONS_REQUEST_CODE = 1
+    private val PERMISSION_REQUEST_CODE = 1000
 
     private val smplRate = 44100 // Hz
     private val frRate = 10 // fps，毎秒の処理回数
@@ -56,43 +58,80 @@ class MainActivity : AppCompatActivity() {
         audioRecord.startRecording()
     }
 
+    private fun permissionCheck(): Boolean { // パーミッション取得チャレンジ 取得出来たらtrue，できなかったらfalse
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // Android 6.0以降について
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) { // マイクの使用が許可されている場合
+                return true // 許可されてるのでtrue
+            } else {
+                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),
+                    PERMISSION_REQUEST_CODE) // リクエストを送信
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) { // 拒否かつ "今後表示しない" になっている場合
+                    Toast.makeText(this, "マイクを使用するには権限を許可してください。", Toast.LENGTH_SHORT).show()
+                    return false // とりあえず終了
+                }
+            }
+        }
+        return true // 特に該当がなかった場合はtrue
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>,
+                                            grantResults: IntArray) { // システム召喚獣
+        when (requestCode) {
+            PERMISSION_REQUEST_CODE -> {
+                // If request is cancelled, the result arrays are empty.
+                if ((grantResults.isNotEmpty() &&
+                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    // Permission is granted. Continue the action or workflow
+                    // in your app.
+                } else {
+                    // Explain to the user that the feature is unavailable because
+                    // the features requires a permission that the user has denied.
+                    // At the same time, respect the user's decision. Don't link to
+                    // system settings in an effort to convince the user to change
+                    // their decision.
+                }
+                return
+            }
+
+            // Add other 'when' lines to check for other
+            // permissions this app might request.
+            else -> {
+                // Ignore all other requests.
+            }
+        }
+    }
+
     private var active = false // マイクONのときtrue
 
     private fun buttonClick(v: View) { // ボタンが押された時の処理
         val aButton = v as ImageButton // 画像ボタンを指定
 
-        if (!active) { // マイクがOFFのとき
+        if (!permissionCheck()) return // マイク使用許可が得られなかったら終了
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // Android 6.0以降について
-                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) { // マイクの使用が許可されていない場合
-                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),
-                        PERMISSIONS_REQUEST_CODE) // リクエストを送信
-                }
-                    if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) { // 許可されなかった場合
-                        return // とりあえず終了
-                }
-            }
+        active = if (!active) { // マイクがOFFのとき
 
             aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
             startRec() // マイクON
-            active = true // ONにする
+            true // ONにする
 
-        } else { // マイクをOFFにしたとき
+        } else { // マイクがONのとき
+
             aButton.setImageResource(R.drawable.`_`) // マイクOFFの画像に変更
             Log.v("AudioRecord", "stop")
             audioRecord.stop() // マイクOFF
-            active = false // OFFにする
+            false // OFFにする
         }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-            val imageButton: ImageButton = findViewById(R.id.imageButton)
-            imageButton.setOnClickListener {
-                buttonClick(imageButton)
-            }
+        val imageButton: ImageButton = findViewById(R.id.imageButton)
+        imageButton.setOnClickListener {
+            buttonClick(imageButton)
         }
     }
+}
