@@ -18,7 +18,7 @@ import kotlin.math.max
 
 class MainActivity : AppCompatActivity() {
 
-    private val PERMISSION_REQUEST_CODE = 1000
+    private val PERMISSION_REQUEST_CODE = 1000 // なんか任意定数っぽいよな
 
     private val smplRate = 44100 // Hz
     private val frRate = 10 // fps，毎秒の処理回数
@@ -58,33 +58,42 @@ class MainActivity : AppCompatActivity() {
         audioRecord.startRecording()
     }
 
-    private fun permissionCheck(): Boolean { // パーミッション取得チャレンジ 取得出来たらtrue，できなかったらfalse
+    var permissionBool = false // マイク許可がある場合はtrue
+
+    private fun permissionCheck() { // パーミッション取得チャレンジ 取得出来たらtrue，できなかったらfalse
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // Android 6.0以降について
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) { // マイクの使用が許可されている場合
-                return true // 許可されてるのでtrue
+                permissionBool = true // 許可されてるのでtrue
             } else {
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),
                     PERMISSION_REQUEST_CODE) // リクエストを送信
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) { // 拒否かつ "今後表示しない" になっている場合
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.RECORD_AUDIO)
+                ) { // 拒否かつ "今後表示しない" になっている場合
                     Toast.makeText(this, "マイクを使用するには権限を許可してください。", Toast.LENGTH_SHORT).show()
-                    return false // とりあえず終了
+
+                    // 許可取ったほうがいいよの説明
+
+                    permissionBool = false // 許可取れなかったのでfalse
                 }
             }
         }
-        return true // 特に該当がなかった場合はtrue
+        return // ターンエンド
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>,
-                                            grantResults: IntArray) { // システム召喚獣
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray,
+    ) { // システム召喚獣
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
                 // If request is cancelled, the result arrays are empty.
                 if ((grantResults.isNotEmpty() &&
-                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // Permission is granted. Continue the action or workflow
-                    // in your app.
+                            grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                ) {
+                    permissionBool = true
                 } else {
                     // Explain to the user that the feature is unavailable because
                     // the features requires a permission that the user has denied.
@@ -108,7 +117,9 @@ class MainActivity : AppCompatActivity() {
     private fun buttonClick(v: View) { // ボタンが押された時の処理
         val aButton = v as ImageButton // 画像ボタンを指定
 
-        if (!permissionCheck()) return // マイク使用許可が得られなかったら終了
+        if (!permissionBool) permissionCheck() // マイク使用許可がなかったら取りに行く
+
+        if (!permissionBool) return // マイク使用許可がなかったら終了
 
         active = if (!active) { // マイクがOFFのとき
 
@@ -133,5 +144,6 @@ class MainActivity : AppCompatActivity() {
         imageButton.setOnClickListener {
             buttonClick(imageButton)
         }
+        if (!permissionBool) permissionCheck() // マイク許可がなければ要求
     }
 }
