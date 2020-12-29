@@ -1,6 +1,7 @@
 package com.example.cablemic
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -11,6 +12,7 @@ import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlin.math.max
@@ -20,23 +22,17 @@ class MainActivity : AppCompatActivity() {
 
     private val PERMISSION_REQUEST_CODE = 1000 // なんか任意定数っぽいよな
 
-    private val smplRate = 44100 // Hz
+    private lateinit var audioRecord: AudioRecord
+    private val sampleRate = 44100 // Hz
     private val frRate = 10 // fps，毎秒の処理回数
-    private val shortPerFrame = smplRate / frRate // フレーム当たりの音声データ数
+    private val shortPerFrame = sampleRate / frRate // フレーム当たりの音声データ数
     private val bytePerFrame = shortPerFrame * 2 // フレーム当たりの音声データのバイト数
     private val bufSize = max(bytePerFrame * 20, // バッファサイズ，↑よりでかいこと
-        AudioRecord.getMinBufferSize(smplRate, // 端末ごとの規定値よりでかいこと
+        AudioRecord.getMinBufferSize(sampleRate, // 端末ごとの規定値よりでかいこと
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT))
 
-    private val audioRecord = AudioRecord( // インスタンス召喚の儀
-        MediaRecorder.AudioSource.MIC, // 入力音源はマイク
-        smplRate, // 44100Hz
-        AudioFormat.CHANNEL_IN_MONO, // モノトラック
-        AudioFormat.ENCODING_PCM_16BIT, // PCM 16bit
-        bufSize) // バッファ
-
-    private fun startRec() {
+    private fun startRec(audioRecord: AudioRecord) {
 
         audioRecord.positionNotificationPeriod = shortPerFrame // フレーム当たりの処理数を指定
         audioRecord.notificationMarkerPosition = 50000 // マーカー周期を指定
@@ -68,18 +64,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),
                     PERMISSION_REQUEST_CODE) // リクエストを送信
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.RECORD_AUDIO)
-                ) { // 拒否かつ "今後表示しない" になっている場合
-                    Toast.makeText(this, "マイクを使用するには権限を許可してください。", Toast.LENGTH_SHORT).show()
-
-                    // 許可取ったほうがいいよの説明
-
-                    permissionBool = false // 許可取れなかったのでfalse
-                }
             }
         }
-        return // ターンエンド
     }
 
     override fun onRequestPermissionsResult(
@@ -95,11 +81,12 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     permissionBool = true
                 } else {
-                    // Explain to the user that the feature is unavailable because
-                    // the features requires a permission that the user has denied.
-                    // At the same time, respect the user's decision. Don't link to
-                    // system settings in an effort to convince the user to change
-                    // their decision.
+                    permissionBool = false
+                    AlertDialog.Builder(this) // 許可取ったほうがいいよの説明
+                        .setTitle("注意")
+                        .setMessage("マイク入力を使用するには権限の許可が必要です。設定からマイクの使用を許可してください。")
+                        .setNeutralButton("閉じる") { _, _ -> }
+                        .show()
                 }
                 return
             }
@@ -117,22 +104,29 @@ class MainActivity : AppCompatActivity() {
     private fun buttonClick(v: View) { // ボタンが押された時の処理
         val aButton = v as ImageButton // 画像ボタンを指定
 
-        if (!permissionBool) permissionCheck() // マイク使用許可がなかったら取りに行く
+        if (permissionBool) { // マイク使用許可があったら処理開始
+            active = if (!active) { // マイクがOFFのとき
 
-        if (!permissionBool) return // マイク使用許可がなかったら終了
+                audioRecord = AudioRecord( // インスタンス召喚の儀
+                    MediaRecorder.AudioSource.MIC, // 入力音源はマイク
+                    sampleRate, // 44100Hz
+                    AudioFormat.CHANNEL_IN_MONO, // モノトラック
+                    AudioFormat.ENCODING_PCM_16BIT, // PCM 16bit
+                    bufSize) // バッファ
 
-        active = if (!active) { // マイクがOFFのとき
+                aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
+                startRec(audioRecord) // マイクON
+                true // ONにする
 
-            aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
-            startRec() // マイクON
-            true // ONにする
+            } else { // マイクがONのとき
 
-        } else { // マイクがONのとき
-
-            aButton.setImageResource(R.drawable.`_`) // マイクOFFの画像に変更
-            Log.v("AudioRecord", "stop")
-            audioRecord.stop() // マイクOFF
-            false // OFFにする
+                aButton.setImageResource(R.drawable.`_`) // マイクOFFの画像に変更
+                Log.v("AudioRecord", "stop")
+                audioRecord.stop() // マイクOFF
+                false // OFFにする
+            }
+        } else {
+            permissionCheck()
         }
     }
 
