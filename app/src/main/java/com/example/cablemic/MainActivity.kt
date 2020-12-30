@@ -116,6 +116,9 @@ class MainActivity : AppCompatActivity() {
 
                 aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
                 startRec(audioRecord) // マイクON
+                //new Thread(new Runnable() {
+                //    　　　　　　　　　　@Override
+                //    　　　　　　　　　　public void run() {})
                 true // ONにする
 
             } else { // マイクがONのとき
