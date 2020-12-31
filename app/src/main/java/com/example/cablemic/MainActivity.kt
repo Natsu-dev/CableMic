@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 1000 // なんか任意定数っぽいよな
 
     private lateinit var audioRecord: AudioRecord
+    //private lateinit var audioTrack: AudioTrack
     private val sampleRate = 44100 // Hz
     private val frRate = 10 // fps，毎秒の処理回数
     private val shortPerFrame = sampleRate / frRate // フレーム当たりの音声データ数
@@ -40,15 +41,17 @@ class MainActivity : AppCompatActivity() {
 
         audioRecord.setRecordPositionUpdateListener(object :
             AudioRecord.OnRecordPositionUpdateListener { // コールバック
+
             override fun onPeriodicNotification(recorder: AudioRecord) { // フレームごと
                 recorder.read(audioArray, 0, shortPerFrame) // 読み込み
                 Log.v("AudioRecord", "onPeriodicNotification size=${audioArray.size}")
+
             }
 
             override fun onMarkerReached(recorder: AudioRecord) { // マーカー周期ごと
                 recorder.read(audioArray, 0, shortPerFrame) // 読み込み
                 Log.v("AudioRecord", "onMarkerReached size=${audioArray.size}")
-                // 好きに処理する
+                // 処理
             }
         })
         audioRecord.startRecording()
@@ -116,9 +119,6 @@ class MainActivity : AppCompatActivity() {
 
                 aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
                 startRec(audioRecord) // マイクON
-                //new Thread(new Runnable() {
-                //    　　　　　　　　　　@Override
-                //    　　　　　　　　　　public void run() {})
                 true // ONにする
 
             } else { // マイクがONのとき
