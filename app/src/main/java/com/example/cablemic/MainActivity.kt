@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPeriodicNotification(recorder: AudioRecord) { // フレームごと
                 recorder.read(audioArray, 0, shortPerFrame) // 読み込み
+                // 再生処理
                 Log.v("AudioRecord", "onPeriodicNotification size=${audioArray.size}")
 
             }
