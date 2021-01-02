@@ -1,21 +1,16 @@
 package com.example.cablemic
 
 import android.Manifest
-import android.content.DialogInterface
 import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
+import android.media.*
 import android.media.AudioTrack
-import android.media.MediaRecorder
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageButton
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import kotlin.math.max
 
 
@@ -25,41 +20,55 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var audioRecord: AudioRecord
     private lateinit var audioTrack: AudioTrack
-    private val sampleRate = 44100 // Hz
+    private val samplingRate = 44100 // Hz
     private val frRate = 10 // fps，毎秒の処理回数
-    private val shortPerFrame = sampleRate / frRate // フレーム当たりの音声データ数
+    private val shortPerFrame = samplingRate / frRate // フレーム当たりの音声データ数
     private val bytePerFrame = shortPerFrame * 2 // フレーム当たりの音声データのバイト数
     private val bufSize = max(bytePerFrame * 20, // バッファサイズ，↑よりでかいこと
-        AudioRecord.getMinBufferSize(sampleRate, // 端末ごとの規定値よりでかいこと
+        AudioRecord.getMinBufferSize(samplingRate, // 端末ごとの規定値よりでかいこと
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT))
+    // private val audioArray = ShortArray(shortPerFrame)
 
-    private fun startRec(audioRecord: AudioRecord) {
+    private fun startRec() {
 
-        audioRecord.positionNotificationPeriod = shortPerFrame // フレーム当たりの処理数を指定
-        audioRecord.notificationMarkerPosition = 50000 // マーカー周期を指定
-        val audioArray = ShortArray(shortPerFrame) // 音声データを格納する配列
+        //audioRecord.positionNotificationPeriod = shortPerFrame // フレーム当たりの処理数を指定
+        //audioRecord.notificationMarkerPosition = 50000 // マーカー周期を指定
+        //val audioArray = ShortArray(shortPerFrame) // 音声データを格納する配列
 
-        audioRecord.setRecordPositionUpdateListener(object :
-            AudioRecord.OnRecordPositionUpdateListener { // コールバック
+        //audioRecord.setRecordPositionUpdateListener(object :
+        //    AudioRecord.OnRecordPositionUpdateListener { // コールバック
 
-            override fun onPeriodicNotification(recorder: AudioRecord) { // フレームごと
-                recorder.read(audioArray, 0, shortPerFrame) // 読み込み
-                // 再生処理
-                Log.v("AudioRecord", "onPeriodicNotification size=${audioArray.size}")
+            //override fun onPeriodicNotification(recorder: AudioRecord) { // フレームごと
+            //    recorder.read(audioArray, 0, shortPerFrame) // 読み込み
+            //    audioTrack.write(buf, 0, buf.length)
+            //    // 再生処理
+            //    Log.v("AudioRecord", "onPeriodicNotification size=${audioArray.size}")
 
-            }
+            //}
 
-            override fun onMarkerReached(recorder: AudioRecord) { // マーカー周期ごと
-                recorder.read(audioArray, 0, shortPerFrame) // 読み込み
-                Log.v("AudioRecord", "onMarkerReached size=${audioArray.size}")
-                // 処理
-            }
-        })
+            //override fun onMarkerReached(recorder: AudioRecord) { // マーカー周期ごと
+            //    recorder.read(audioArray, 0, shortPerFrame) // 読み込み
+            //    Log.v("AudioRecord", "onMarkerReached size=${audioArray.size}")
+            //    // 処理
+            //}
+       //})
         audioRecord.startRecording()
+        audioTrack.play()
+        Thread {
+            val buf = ShortArray(shortPerFrame)
+            while (active) {
+                audioRecord.read(buf, 0, shortPerFrame) // 録音したデータをバッファに
+                audioTrack.write(buf, 0, shortPerFrame) // バッファから再生
+            }
+
+            Log.v("AudioRecord", "stop") // activeがfalseになったら終了
+            audioRecord.stop()
+            audioTrack.stop()
+        }.start()
     }
 
-    var permissionBool = false // マイク許可がある場合はtrue
+    private var permissionBool = false // マイク許可がある場合はtrue
 
     private fun permissionCheck() { // パーミッション取得チャレンジ 取得出来たらtrue，できなかったらfalse
 
@@ -114,21 +123,41 @@ class MainActivity : AppCompatActivity() {
 
                 audioRecord = AudioRecord( // インスタンス召喚の儀
                     MediaRecorder.AudioSource.MIC, // 入力音源はマイク
-                    sampleRate, // 44100Hz
+                    samplingRate, // 44100Hz
                     AudioFormat.CHANNEL_IN_MONO, // モノトラック
                     AudioFormat.ENCODING_PCM_16BIT, // PCM 16bit
                     bufSize) // バッファ
 
+                //audioTrack = AudioTrack(
+                //    AudioManager.STREAM_VOICE_CALL,
+                //    samplingRate,
+                //    AudioFormat.CHANNEL_OUT_MONO,
+                //    AudioFormat.ENCODING_PCM_16BIT,
+                //    bufSize,
+                //    AudioTrack.MODE_STREAM)
+
+                audioTrack = AudioTrack.Builder() // インスタンス召喚の儀
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build())
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(samplingRate)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build())
+                    .setBufferSizeInBytes(bufSize)
+                    .build()
+
                 aButton.setImageResource(R.drawable._0) // マイクONの画像に変更
-                startRec(audioRecord) // マイクON
+                startRec() // マイクON
                 true // ONにする
 
             } else { // マイクがONのとき
 
                 aButton.setImageResource(R.drawable.`_`) // マイクOFFの画像に変更
-                Log.v("AudioRecord", "stop")
-                audioRecord.stop() // マイクOFF
-                audioRecord.release()
                 false // OFFにする
             }
         } else {
