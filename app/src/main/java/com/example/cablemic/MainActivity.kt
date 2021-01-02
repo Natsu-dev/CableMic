@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Bundle
@@ -23,7 +24,7 @@ class MainActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 1000 // なんか任意定数っぽいよな
 
     private lateinit var audioRecord: AudioRecord
-    //private lateinit var audioTrack: AudioTrack
+    private lateinit var audioTrack: AudioTrack
     private val sampleRate = 44100 // Hz
     private val frRate = 10 // fps，毎秒の処理回数
     private val shortPerFrame = sampleRate / frRate // フレーム当たりの音声データ数
@@ -127,6 +128,7 @@ class MainActivity : AppCompatActivity() {
                 aButton.setImageResource(R.drawable.`_`) // マイクOFFの画像に変更
                 Log.v("AudioRecord", "stop")
                 audioRecord.stop() // マイクOFF
+                audioRecord.release()
                 false // OFFにする
             }
         } else {
