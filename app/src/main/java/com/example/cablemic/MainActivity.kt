@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
     private val frRate = 10 // fps，毎秒の処理回数
     private val shortPerFrame = samplingRate / frRate // フレーム当たりの音声データ数
     private val bytePerFrame = shortPerFrame * 2 // フレーム当たりの音声データのバイト数
-    private val bufSize = max(bytePerFrame * 20, // バッファサイズ，↑よりでかいこと
+    private val bufSize = max(bytePerFrame * 1, // バッファサイズ，↑よりでかいこと（ただし定数を小さくすればするほど遅延が減る）
         AudioRecord.getMinBufferSize(samplingRate, // 端末ごとの規定値よりでかいこと
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT))
