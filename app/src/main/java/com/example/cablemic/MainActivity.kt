@@ -1,6 +1,7 @@
 package com.example.cablemic
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.media.*
 import android.media.AudioTrack
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT))
     // private val audioArray = ShortArray(shortPerFrame)
+    //private val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     private fun startRec() {
 
@@ -139,15 +141,15 @@ class MainActivity : AppCompatActivity() {
                 audioTrack = AudioTrack.Builder() // インスタンス召喚の儀
                     .setAudioAttributes(
                         AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build())
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build())
                     .setAudioFormat(
                         AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(samplingRate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build())
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(samplingRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
                     .setBufferSizeInBytes(bufSize)
                     .build()
 
@@ -173,6 +175,10 @@ class MainActivity : AppCompatActivity() {
         imageButton.setOnClickListener {
             buttonClick(imageButton)
         }
+
+        //am.mode = AudioManager.MODE_NORMAL;
+        //am.isSpeakerphoneOn = true; //出力先を強制的にライン出力に変更（ただしdeprecated）
+
         if (!permissionBool) permissionCheck() // マイク許可がなければ要求
     }
 }
