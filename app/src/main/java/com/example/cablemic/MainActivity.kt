@@ -30,7 +30,6 @@ class MainActivity : AppCompatActivity() {
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT))
     // private val audioArray = ShortArray(shortPerFrame)
-    //private val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     private fun startRec() {
 
@@ -123,6 +122,10 @@ class MainActivity : AppCompatActivity() {
         if (permissionBool) { // マイク使用許可があったら処理開始
             active = if (!active) { // マイクがOFFのとき
 
+                //val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                //am.mode = AudioManager.MODE_NORMAL;
+                //am.isWiredHeadsetOn = true; //出力先を強制的にライン出力に変更（ただしdeprecated）
+
                 audioRecord = AudioRecord( // インスタンス召喚の儀
                     MediaRecorder.AudioSource.MIC, // 入力音源はマイク
                     samplingRate, // 44100Hz
@@ -175,9 +178,6 @@ class MainActivity : AppCompatActivity() {
         imageButton.setOnClickListener {
             buttonClick(imageButton)
         }
-
-        //am.mode = AudioManager.MODE_NORMAL;
-        //am.isSpeakerphoneOn = true; //出力先を強制的にライン出力に変更（ただしdeprecated）
 
         if (!permissionBool) permissionCheck() // マイク許可がなければ要求
     }
