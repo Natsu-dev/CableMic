@@ -32,28 +32,6 @@ class MainActivity : AppCompatActivity() {
     // private val audioArray = ShortArray(shortPerFrame)
 
     private fun startRec() {
-
-        //audioRecord.positionNotificationPeriod = shortPerFrame // フレーム当たりの処理数を指定
-        //audioRecord.notificationMarkerPosition = 50000 // マーカー周期を指定
-        //val audioArray = ShortArray(shortPerFrame) // 音声データを格納する配列
-
-        //audioRecord.setRecordPositionUpdateListener(object :
-        //    AudioRecord.OnRecordPositionUpdateListener { // コールバック
-
-            //override fun onPeriodicNotification(recorder: AudioRecord) { // フレームごと
-            //    recorder.read(audioArray, 0, shortPerFrame) // 読み込み
-            //    audioTrack.write(buf, 0, buf.length)
-            //    // 再生処理
-            //    Log.v("AudioRecord", "onPeriodicNotification size=${audioArray.size}")
-
-            //}
-
-            //override fun onMarkerReached(recorder: AudioRecord) { // マーカー周期ごと
-            //    recorder.read(audioArray, 0, shortPerFrame) // 読み込み
-            //    Log.v("AudioRecord", "onMarkerReached size=${audioArray.size}")
-            //    // 処理
-            //}
-       //})
         audioRecord.startRecording()
         audioTrack.play()
         Thread {
@@ -63,7 +41,7 @@ class MainActivity : AppCompatActivity() {
                 audioTrack.write(buf, 0, shortPerFrame) // バッファから再生
             }
 
-            Log.v("AudioRecord", "stop") // activeがfalseになったら終了
+            //Log.v("AudioRecord", "stop") // activeがfalseになったら終了
             audioRecord.stop()
             audioTrack.stop()
         }.start()
